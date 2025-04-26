@@ -1,0 +1,2519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroCare Stroke Classification System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Progress indicator styles */
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            height: 10px;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #4CAF50, #FFC107, #F44336);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        /* Tooltip styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+        }
+        
+        .tooltip i {
+            color: #0099cc;
+            font-size: 14px;
+        }
+        
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1000; /* Increased z-index to ensure it stays on top */
+            bottom: 125%;
+            left: 0;
+            transform: translateX(0);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 13px;
+            line-height: 1.4;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* Adjust tooltip position for elements on the right side */
+        .form-col:nth-child(2) .tooltip .tooltip-text,
+        .form-col:nth-child(3) .tooltip .tooltip-text {
+            left: auto;
+            right: 0;
+        }
+
+        .tooltip .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 20px;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        
+        /* Adjust arrow position for tooltips on the right */
+        .form-col:nth-child(2) .tooltip .tooltip-text::after,
+        .form-col:nth-child(3) .tooltip .tooltip-text::after {
+            left: auto;
+            right: 20px;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* Section collapsible styles */
+        .form-section {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section-header {
+            background-color: #f6f6f6;
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        
+        .section-header:hover {
+            background-color: #ececec;
+        }
+        
+        .section-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .section-header i {
+            transition: transform 0.3s;
+        }
+        
+        .section-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .section-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .section-header.active i {
+            transform: rotate(180deg);
+        }
+        
+        /* Dark mode toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            top: 10;
+            left: 20px;
+            z-index: 1000;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s;
+        }
+        
+        .dark-mode-toggle:hover {
+            background-color: #555;
+        }
+        
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .container {
+            background-color: #1e1e1e;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+        
+        body.dark-mode .form-section {
+            border-color: #333;
+            background-color: #1e1e1e;
+        }
+        
+        body.dark-mode .section-header {
+            background-color: #2d2d2d;
+        }
+        
+        body.dark-mode .section-header:hover {
+            background-color: #3d3d3d;
+        }
+        
+        body.dark-mode .section-header h3 {
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode select, 
+        body.dark-mode input[type="number"] {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border-color: #444;
+        }
+        
+        body.dark-mode .progress-container {
+            background-color: #333;
+        }
+        
+        body.dark-mode .progress-text {
+            color: #bbb;
+        }
+        
+        body.dark-mode .form-content {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode label {
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .result {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        
+        body.dark-mode .toast-classification {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        /* Export report button */
+        .export-report-btn {
+            background-color: #0099cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s;
+        }
+        
+        .export-report-btn i {
+            margin-right: 8px;
+        }
+        
+        .export-report-btn:hover {
+            background-color: #007aa3;
+        }
+        
+        body.dark-mode .export-report-btn {
+            background-color: #0077aa;
+        }
+        
+        body.dark-mode .export-report-btn:hover {
+            background-color: #005577;
+        }
+        
+        /* Original styles below */
+        :root {
+            --primary-blue: #005EB8;
+            --secondary-blue: #00A9CE;
+            --accent-teal: #00C9B1;
+            --danger-red: #ED2E38;
+            --warning-orange: #FDA50F;
+            --success-green: #00AC41;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a264f 0%, #1a3d6d 100%);
+            color: #fff;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .particles-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            padding: 25px 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .clinical-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-left: 15px;
+            font-size: 12px;
+            backdrop-filter: blur(5px);
+        }
+
+        .form-content {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            color: #2d3748;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+
+        .form-col {
+            flex: 1;
+            padding: 0 10px;
+            min-width: 200px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2d3748;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px rgba(0,201,177,0.2);
+            outline: none;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            padding: 15px 35px;
+            border-radius: 50px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px auto;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,94,184,0.3);
+        }
+
+        .result {
+            margin: 25px 0;
+            padding: 25px;
+            border-radius: 12px;
+            animation: fadeIn 0.5s ease;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .high-risk {
+            background-color: rgb(235, 134, 139);
+            border-left: 4px solid var(--danger-red);
+            color: #982029;
+        }
+
+        .moderate-risk {
+            background-color: rgb(194, 154, 85);
+            border-left: 4px solid var(--warning-orange);
+            color: #8A4B00;
+        }
+
+        .low-risk {
+            background-color: rgb(86, 196, 128);
+            border-left: 4px solid var(--success-green);
+            color: #155724;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .risk-meter {
+            height: 12px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .risk-meter-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease-in-out;
+        }
+
+        .risk-low {
+            background: var(--success-green);
+        }
+
+        .risk-moderate {
+            background: var(--warning-orange);
+        }
+
+        .risk-high {
+            background: var(--danger-red);
+        }
+
+        .toast-classification {
+            background: rgba(255,255,255,0.95);
+            border-left: 4px solid var(--primary-blue);
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 25px;
+            color: #2d3748;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .toast-label {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: var(--primary-blue);
+            color: white;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .conditional-field {
+            display: none;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            margin-bottom: 30px;
+        }
+        
+        .loading-brain {
+            width: 100%;
+            height: 100%;
+            background-image: url('https://cdn.jsdelivr.net/gh/2manypistachios/customize-uw-madison-piazza@master/img/brain.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: pulse 2s infinite, rotate 4s infinite linear;
+        }
+        
+        .loading-message {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            margin-top: 20px;
+            height: 30px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 0.6; transform: scale(0.95); }
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-col {
+                flex: 100%;
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Source Code Modal Styles */
+        .source-code-btn {
+            background: linear-gradient(135deg, #333, #555);
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .source-code-btn:hover {
+            background: linear-gradient(135deg, #444, #666);
+        }
+        
+        .modal {
+            display: none; 
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: #0d1117;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            color: #c9d1d9;
+            box-shadow: 0 0 30px rgba(0,100,255,0.2);
+            border: 1px solid #30363d;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .modal-title {
+            color: #58a6ff;
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #fff;
+        }
+        
+        .code-container {
+            background-color: #161b22;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            overflow-x: auto;
+            line-height: 1.5;
+            font-size: 14px;
+            position: relative;
+        }
+        
+        .line-numbers {
+            position: absolute;
+            left: 0;
+            top: 0;
+            padding: 15px 10px;
+            background-color: #161b22;
+            border-right: 1px solid #30363d;
+            color: #8b949e;
+            text-align: right;
+            user-select: none;
+        }
+        
+        .python-code {
+            margin-left: 40px;
+        }
+        
+        .comment { color: #8b949e; }
+        .keyword { color: #ff7b72; }
+        .string { color: #a5d6ff; }
+        .function { color: #d2a8ff; }
+        .class { color: #7ee787; }
+        .number { color: #f2cc60; }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #30363d;
+            color: #c9d1d9;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background-color: #58a6ff;
+            color: #fff;
+        }
+
+        /* Side Menu for Thinking Process */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100%;
+            background: rgba(10, 38, 79, 0.95);
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+            z-index: 999;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .side-menu.open {
+            right: 0;
+        }
+        
+        .side-menu-header {
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .side-menu-header h3 {
+            margin: 0;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .side-menu-header h3 i {
+            margin-right: 10px;
+        }
+        
+        .side-menu-content {
+            padding: 20px;
+            color: rgba(255,255,255,0.9);
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            height: calc(100% - 150px);
+            overflow-y: auto;
+        }
+        
+        .side-menu-content p {
+            margin: 0 0 10px 0;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .thinking-line {
+            padding: 5px 10px;
+            border-left: 3px solid var(--accent-teal);
+            background: rgba(255,255,255,0.05);
+            margin: 8px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .hamburger-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .hamburger-icon:hover {
+            background: var(--secondary-blue);
+        }
+        
+        .hamburger-line {
+            width: 20px;
+            height: 2px;
+            background: white;
+            margin: 2px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .hamburger-icon.open .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(3px, 3px);
+        }
+        
+        .hamburger-icon.open .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .hamburger-icon.open .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(3px, -3px);
+        }
+        
+        .typing {
+            border-right: 2px solid var(--accent-teal);
+            animation: blink 0.7s infinite;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        
+        @keyframes blink {
+            0%, 100% { border-color: transparent; }
+            50% { border-color: var(--accent-teal); }
+        }
+        
+        .calculation-node {
+            color: var(--secondary-blue);
+            font-weight: bold;
+        }
+        
+        .calculation-result {
+            color: var(--accent-teal);
+            font-weight: bold;
+        }
+        
+        .calculation-warning {
+            color: var(--warning-orange);
+            font-weight: bold;
+        }
+        
+        .calculation-error {
+            color: var(--danger-red);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <button type="button" class="dark-mode-toggle" id="darkModeToggle" onclick="toggleDarkMode()">
+        <i class="fas fa-moon" id="darkModeIcon"></i>
+    </button>
+
+    <div id="particles-js" class="particles-bg"></div>
+    
+    <div class="loading-overlay">
+        <div class="loading-spinner">
+            <div class="loading-brain"></div>
+        </div>
+        <div class="loading-message" id="loadingMessage">Analyzing patient data...</div>
+    </div>
+    
+    <!-- Hamburger Menu Icon -->
+    <div class="hamburger-icon" id="hamburgerIcon" onclick="toggleSideMenu()">
+        <div class="hamburger-line"></div>
+        <div class="hamburger-line"></div>
+        <div class="hamburger-line"></div>
+    </div>
+    
+    <!-- Side Menu for Thinking Process -->
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h3><i class="fas fa-brain"></i> Neural Processing</h3>
+            <span onclick="toggleSideMenu()" style="cursor:pointer;"><i class="fas fa-times"></i></span>
+        </div>
+        <div class="side-menu-content" id="thinkingProcess">
+            <p>NeuroCare Algorithm initialized...</p>
+            <p>Waiting for patient data input...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>
+                <i class="fas fa-brain"></i>
+                Stroke Risk and TOAST Classification Tool
+                <span class="clinical-badge">CLINICAL</span>
+            </h1>
+        </header>
+
+        <div class="form-content">
+            <form id="strokeForm">
+                <!-- Progress Indicator -->
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">0% Complete (0/12 fields)</div>
+                
+                <!-- Form sections with onchange handlers -->
+                <div class="form-section">
+                    <div class="section-header active" onclick="toggleSection(this)">
+                        <h3><i class="fas fa-user"></i> Basic Information</h3>
+                        <i class="fas fa-chevron-up"></i>
+                    </div>
+                    <div class="section-content active">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="strokeType">Type of Stroke:</label>
+                                    <select id="strokeType" required onchange="updateProgressBar()">
+                                        <option value="">Select</option>
+                                        <option value="ischemic">Ischemic</option>
+                                        <option value="hemorrhagic">Hemorrhagic</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Ischemic: caused by a blood clot (87% of strokes). Hemorrhagic: caused by bleeding in the brain (13% of strokes but higher mortality).</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="recurrent">Recurrent Stroke:</label>
+                                    <select id="recurrent" required onchange="updateProgressBar()">
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Recurrent strokes have a significantly higher mortality rate and often indicate failure of preventive measures. Approximately 25% of stroke survivors will have another stroke within 5 years.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="gender">Gender:</label>
+                                    <select id="gender" onchange="toggleGenderFields(); updateProgressBar()" required>
+                                        <option value="">Select</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Males have a 1.25x higher stroke risk than females before age 75. Women have gender-specific risk factors (pregnancy, hormone therapy) and often present with atypical symptoms.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Factors -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3><i class="fas fa-heartbeat"></i> Risk Factors</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group conditional-field" id="maleSmokerField">
+                                    <label for="maleSmoker">Male Smoker:</label>
+                                    <select id="maleSmoker">
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Male smokers have a 2-4× higher stroke risk than non-smokers. Smoking causes endothelial dysfunction and accelerates atherosclerosis.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group conditional-field" id="femaleSmokerField">
+                                    <label for="femaleSmoker">Female Smoker:</label>
+                                    <select id="femaleSmoker">
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Smoking negates protective hormonal effects in females. Female smokers taking oral contraceptives have a synergistic increase in stroke risk.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="htn">Hypertension (HTN):</label>
+                                    <select id="htn" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Hypertension is the single most important modifiable risk factor for stroke. Each 10mmHg increase in systolic BP increases stroke risk by ~30%.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="familyHistory">Family History of Stroke:</label>
+                                    <select id="familyHistory" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">First-degree relatives with stroke history increases risk by 2-3×. Genetic factors may influence coagulation cascade and inflammatory responses.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group conditional-field" id="ocpsField">
+                                    <label for="ocps">Oral Contraceptive Pills (OCPs):</label>
+                                    <select id="ocps">
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">OCPs increase thrombotic risk, especially when combined with smoking. Modern low-dose estrogen pills have lower risk than older formulations.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="consanguinity">Consanguinity:</label>
+                                    <select id="consanguinity" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Consanguinity (related parents) can increase homozygosity for recessive stroke risk alleles and may amplify genetic thrombophilias or vasculopathies.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Laboratory Values -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3><i class="fas fa-flask"></i> Laboratory Values</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="hba1c">HbA1c (%):</label>
+                                    <input type="number" id="hba1c" min="3" max="15" step="0.1" required>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">HbA1c reflects average blood glucose over 2-3 months. Normal: < 5.7%, Prediabetes: 5.7-6.4%, Diabetes: ≥ 6.5%. Elevated levels increase microvascular damage.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tg">Triglycerides (mg/dL):</label>
+                                    <input type="number" id="tg" min="30" max="1000" required>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Triglycerides are fat molecules in blood. Normal: < 150 mg/dL, Borderline: 150-199 mg/dL, High: ≥ 200 mg/dL. Elevated levels promote atherosclerosis.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="ldl">LDL (mg/dL):</label>
+                                    <input type="number" id="ldl" min="30" max="300" required>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">"Bad" cholesterol directly contributes to arterial plaque. Optimal: < 100 mg/dL, Near optimal: 100-129 mg/dL, Borderline: 130-159 mg/dL, High: ≥ 160 mg/dL.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hdl">HDL (mg/dL):</label>
+                                    <input type="number" id="hdl" min="20" max="100" required>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">"Good" cholesterol helps remove LDL from arterial walls. Low (risk factor): < 40 mg/dL in men, < 50 mg/dL in women. High (protective): ≥ 60 mg/dL.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cardiac History -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3><i class="fas fa-heart"></i> Cardiac History</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="valvular">Valvular Heart Diseases:</label>
+                                    <select id="valvular" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Valvular heart disease (especially mitral stenosis) significantly increases cardioembolic stroke risk. Mechanical valves require anticoagulation.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="nonValvular">Non-Valvular Heart Diseases:</label>
+                                    <select id="nonValvular" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Includes atrial fibrillation, cardiomyopathies, and septal defects. Atrial fibrillation increases stroke risk 5-fold and accounts for ~15% of all strokes.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="mi">Myocardial Infarction (MI):</label>
+                                    <select id="mi" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Prior MI (heart attack) indicates established atherosclerosis and increases stroke risk. Ventricular dysfunction creates embolic potential from mural thrombi.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="anticoagulants">Anticoagulants Medication:</label>
+                                    <select id="anticoagulants" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Medications like warfarin, DOACs, or heparin that reduce blood clotting. Provides protection against thromboembolic strokes but increases bleeding risk.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Autoimmune Diseases -->
+                <div class="form-section">
+                    <div class="section-header" onclick="toggleSection(this)">
+                        <h3><i class="fas fa-shield-alt"></i> Autoimmune Diseases</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="section-content">
+                        <div class="form-row">
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="sle">Systemic Lupus Erythematosus (SLE):</label>
+                                    <select id="sle" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">SLE creates inflammatory vasculopathy affecting cerebral vessels. Patients have 2-3× higher stroke risk. Often associated with antiphospholipid antibodies.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="antiphospholipid">Antiphospholipid Syndrome:</label>
+                                    <select id="antiphospholipid" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Primary hypercoagulable state with very high stroke risk. Pathogenic antibodies (anticardiolipin, lupus anticoagulant) promote thrombosis.</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-col">
+                                <div class="form-group">
+                                    <label for="sjogren">Sjogren's Syndrome:</label>
+                                    <select id="sjogren" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Autoimmune condition with potential for cerebral vasculitis. Associated with anti-Ro and anti-La antibodies that may affect vascular integrity.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="behcet">Behcet's Disease:</label>
+                                    <select id="behcet" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Rare vasculitic disorder affecting vessels of all sizes. Associated with venous sinus thrombosis and arterial aneurysms in the brain.</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rheumatoid">Rheumatoid Arthritis:</label>
+                                    <select id="rheumatoid" required>
+                                        <option value="">Select</option>
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span class="tooltip-text">Systemic inflammatory condition with accelerated atherosclerosis. Chronic inflammation promotes endothelial dysfunction and vascular damage.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="analyzeBtn" onclick="assessRisk()">
+                    <i class="fas fa-chart-line"></i>
+                    Analyze Risk
+                </button>
+            </form>
+        </div>
+
+        <div class="results-container">
+                    <div id="riskResult" class="result"></div>
+                    <div id="toastClassification" class="toast-classification"></div>
+                </div>
+        
+        <!-- Source Code Button -->
+        <button type="button" class="source-code-btn" onclick="openSourceCodeModal()">
+            <i class="fas fa-code"></i>
+            Source Code
+        </button>
+    </div>
+
+    <!-- Source Code Modal -->
+    <div id="sourceCodeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><i class="fab fa-python"></i> Stroke Risk Classification - Python Implementation</h3>
+                <span class="close" onclick="closeSourceCodeModal()">&times;</span>
+            </div>
+            <div class="code-container">
+                <button class="copy-btn" onclick="copySourceCode()">Copy Code</button>
+                <div class="python-code" id="pythonCode">
+<span class="comment">#!/usr/bin/env python</span>
+<span class="comment"># -*- coding: utf-8 -*-</span>
+<span class="comment"># Stroke Risk Assessment and TOAST Classification Algorithm</span>
+<span class="comment"># Version 1.5.2 - April 2025</span>
+
+<span class="keyword">import</span> <span class="function">numpy</span> <span class="keyword">as</span> np
+<span class="keyword">import</span> <span class="function">pandas</span> <span class="keyword">as</span> pd
+<span class="keyword">from</span> sklearn.ensemble <span class="keyword">import</span> RandomForestClassifier
+<span class="keyword">from</span> sklearn.preprocessing <span class="keyword">import</span> StandardScaler
+<span class="keyword">from</span> sklearn.model_selection <span class="keyword">import</span> train_test_split
+<span class="keyword">from</span> sklearn.metrics <span class="keyword">import</span> classification_report, confusion_matrix
+
+<span class="comment"># Define the Stroke Risk Calculator</span>
+<span class="keyword">class</span> <span class="class">StrokeRiskCalculator</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.risk_score = <span class="number">0</span>
+        self.risk_factors = []
+        self.model = self._train_model()
+    
+    <span class="keyword">def</span> <span class="function">_train_model</span>(self):
+        <span class="comment"># This would normally load or train an ML model</span>
+        <span class="comment"># For demo purposes, we'll create a simple RandomForest</span>
+        model = RandomForestClassifier(n_estimators=<span class="number">100</span>, random_state=<span class="number">42</span>)
+        <span class="keyword">return</span> model
+    
+    <span class="keyword">def</span> <span class="function">calculate_risk_score</span>(self, patient_data):
+        <span class="comment"># Calculate risk score based on clinical factors</span>
+        score = <span class="number">0</span>
+        
+        <span class="comment"># Stroke type</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'stroke_type'</span>] == <span class="string">'hemorrhagic'</span>:
+            score += <span class="number">4</span>
+        
+        <span class="comment"># Recurrent stroke</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'recurrent'</span>]:
+            score += <span class="number">3</span>
+        
+        <span class="comment"># Smoking status based on gender</span>
+        <span class="keyword">if</span> (patient_data[<span class="string">'gender'</span>] == <span class="string">'male'</span> <span class="keyword">and</span> patient_data[<span class="string">'smoker'</span>]) <span class="keyword">or</span> \
+           (patient_data[<span class="string">'gender'</span>] == <span class="string">'female'</span> <span class="keyword">and</span> patient_data[<span class="string">'smoker'</span>] ):
+            score += <span class="number">2</span>
+        
+        <span class="comment"># HTN</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'hypertension'</span>]:
+            score += <span class="number">2</span>
+            self.risk_factors.append(<span class="string">'Hypertension'</span>)
+        
+        <span class="comment"># HbA1c</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'hba1c'</span>] >= <span class="number">6.5</span>:
+            increment = min(<span class="number">3</span>, <span class="keyword">int</span>((patient_data[<span class="string">'hba1c'</span>] - <span class="number">6.5</span>) / <span class="number">0.5</span>))
+            score += increment
+            self.risk_factors.append(<span class="string">'Elevated HbA1c'</span>)
+        
+        <span class="comment"># Lipid profile</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'ldl'</span>] >= <span class="number">160</span>:
+            score += <span class="number">2</span>
+            self.risk_factors.append(<span class="string">'Elevated LDL'</span>)
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'hdl'</span>] < <span class="number">40</span>:
+            score += <span class="number">1</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'triglycerides'</span>] >= <span class="number">150</span>:
+            score += <span class="number">1</span>
+        
+        <span class="comment"># Medical history</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'anticoagulants'</span>]:
+            score -= <span class="number">1</span>  <span class="comment"># Protective factor</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'family_history'</span>]:
+            score += <span class="number">2</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'valvular_disease'</span>]:
+            score += <span class="number">3</span>
+            self.risk_factors.append(<span class="string">'Valvular Heart Disease'</span>)
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'non_valvular_disease'</span>]:
+            score += <span class="number">2</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'mi'</span>]:
+            score += <span class="number">3</span>
+            self.risk_factors.append(<span class="string">'History of MI'</span>)
+        
+        <span class="comment"># Autoimmune diseases</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'sle'</span>]:
+            score += <span class="number">2</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'antiphospholipid'</span>]:
+            score += <span class="number">3</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'sjogren'</span>]:
+            score += <span class="number">2</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'behcet'</span>]:
+            score += <span class="number">2</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string">'rheumatoid'</span>]:
+            score += <span class="number">2</span>
+        
+        <span class="comment"># Other factors</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'gender'</span>] == <span class="string">'female'</span> <span class="keyword">and</span> patient_data[<span class="string">'ocps'</span>]:
+            score += <span class="number">2</span>
+        
+        <span class="keyword">if</span> patient_data[<span class="string>'consanguinity'</span>]:
+            score += <span class="number">1</span>
+        
+        self.risk_score = score
+        <span class="keyword">return</span> score
+    
+    <span class="keyword">def</span> <span class="function">get_risk_level</span>(self):
+        <span class="comment"># Determine risk level based on score</span>
+        <span class="keyword">if</span> self.risk_score >= <span class="number">15</span>:
+            <span class="keyword">return</span> {
+                <span class="string">'level'</span>: <span class="string">'Very High Risk'</span>,
+                <span class="string">'severity'</span>: <span class="string">'Severe'</span>,
+                <span class="string">'percentage'</span>: <span class="number">95</span>
+            }
+        <span class="keyword">elif</span> self.risk_score >= <span class="number">10</span>:
+            <span class="keyword">return</span> {
+                <span class="string">'level'</span>: <span class="string">'High Risk'</span>,
+                <span class="string">'severity'</span>: <span class="string">'High'</span>,
+                <span class="string">'percentage'</span>: <span class="number">70</span>
+            }
+        <span class="keyword">elif</span> self.risk_score >= <span class="number">5</span>:
+            <span class="keyword">return</span> {
+                <span class="string">'level'</span>: <span class="string">'Moderate Risk'</span>,
+                <span class="string">'severity'</span>: <span class="string">'Moderate'</span>,
+                <span class="string">'percentage'</span>: <span class="number">40</span>
+            }
+        <span class="keyword">else</span>:
+            <span class="keyword">return</span> {
+                <span class="string">'level'</span>: <span class="string">'Low Risk'</span>,
+                <span class="string">'severity'</span>: <span class="string">'Mild'</span>,
+                <span class="string">'percentage'</span>: <span class="number">15</span>
+            }
+
+<span class="comment"># Define the TOAST Classification System</span>
+<span class="keyword">class</span> <span class="class">TOASTClassifier</span>:
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.classification = <span class="string">''</span>
+        self.description = <span class="string">''</span>
+        self.recommendations = []
+    
+    <span class="keyword">def</span> <span class="function">classify</span>(self, patient_data):
+        <span class="comment"># Only applicable for ischemic strokes</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'stroke_type'</span>] != <span class="string">'ischemic'</span>:
+            <span class="keyword">return</span> {
+                <span class="string">'type'</span>: <span class="string">'Not Applicable'</span>,
+                <span class="string">'description'</span>: <span class="string">'TOAST classification is primarily for ischemic strokes.'</span>,
+                <span class="string">'recommendations'</span>: [
+                    <span class="string">'Intracranial aneurysms evaluation'</span>,
+                    <span class="string">'Arteriovenous malformations assessment'</span>,
+                    <span class="string">'Cerebral amyloid angiopathy testing'</span>,
+                    <span class="string">'Coagulopathy assessment'</span>
+                ]
+            }
+        
+        <span class="comment"># Determine TOAST classification</span>
+        <span class="keyword">if</span> patient_data[<span class="string">'valvular_disease'</span>] <span class="keyword">or</span> patient_data[<span class="string">'mi'</span>]:
+            self.classification = <span class="string">'Cardioembolic (CE)'</span>
+            self.description = <span class="string">'Likely caused by cardiac embolism from valvular heart disease or myocardial infarction.'</span>
+            self.recommendations = [
+                <span class="string">'Echocardiography'</span>,
+                <span class="string">'Extended cardiac monitoring'</span>,
+                <span class="string">'Evaluation for anticoagulation therapy'</span>
+            ]
+        <span class="keyword">elif</span> patient_data[<span class="string">'ldl'</span>] >= <span class="number">160</span> <span class="keyword">or</span> patient_data[<span class="string">'hypertension'</span>]:
+            self.classification = <span class="string">'Large-Artery Atherosclerosis (LAA)'</span>
+            self.description = <span class="string">'Associated with atherosclerosis risk factors like high LDL and hypertension.'</span>
+            self.recommendations = [
+                <span class="string">'Carotid duplex ultrasound'</span>,
+                <span class="string">'CT angiography'</span>,
+                <span class="string">'Lipid management'</span>
+            ]
+        <span class="keyword">elif</span> patient_data[<span class="string">'antiphospholipid'</span>] <span class="keyword">or</span> patient_data[<span class="string">'sle'</span>]:
+            self.classification = <span class="string">'Stroke of Other Determined Etiology'</span>
+            self.description = <span class="string">'Associated with autoimmune or hematologic disorders.'</span>
+            self.recommendations = [
+                <span class="string">'Autoimmune panel'</span>,
+                <span class="string">'Hypercoagulability testing'</span>,
+                <span class="string">'Specialized consultation'</span>
+            ]
+        <span class="keyword">else</span>:
+            self.classification = <span class="string">'Undetermined Etiology'</span>
+            self.description = <span class="string">'Insufficient information for specific classification.'</span>
+            self.recommendations = [
+                <span class="string">'Extended vascular imaging'</span>,
+                <span class="string">'Cardiac monitoring'</span>,
+                <span class="string">'Consider additional tests based on clinical suspicion'</span>
+            ]
+        
+        <span class="keyword">return</span> {
+            <span class="string">'type'</span>: self.classification,
+            <span class="string">'description'</span>: self.description,
+            <span class="string">'recommendations'</span>: self.recommendations
+        }
+
+<span class="comment"># Example usage</span>
+<span class="keyword">def</span> <span class="function">main</span>():
+
+    <span class="comment"># Sample patient data</span>
+    patient = {
+        <span class="string">'stroke_type'</span>: <span class="string">'ischemic'</span>,
+        <span class="string">'recurrent'</span>: <span class="keyword">False</span>,
+        <span class="string">'gender'</span>: <span class="string">'male'</span>,
+        <span class="string">'smoker'</span>: <span class="keyword">True</span>,
+        <span class="string">'hypertension'</span>: <span class="keyword">True</span>,
+        <span class="string">'hba1c'</span>: <span class="number">7.2</span>,
+        <span class="string">'ldl'</span>: <span class="number">170</span>,
+        <span class="string">'hdl'</span>: <span class="number">35</span>,
+        <span class="string">'triglycerides'</span>: <span class="number">180</span>,
+        <span class="string">'anticoagulants'</span>: <span class="keyword">False</span>,
+        <span class="string">'family_history'</span>: <span class="keyword">True</span>,
+        <span class="string">'valvular_disease'</span>: <span class="keyword">False</span>,
+        <span class="string">'non_valvular_disease'</span>: <span class="keyword">True</span>,
+        <span class="string">'mi'</span>: <span class="keyword">False</span>,
+        <span class="string">'sle'</span>: <span class="keyword">False</span>,
+        <span class="string">'antiphospholipid'</span>: <span class="keyword">False</span>,
+        <span class="string">'sjogren'</span>: <span class="keyword">False</span>,
+        <span class="string">'behcet'</span>: <span class="keyword">False</span>,
+        <span class="string">'rheumatoid'</span>: <span class="keyword">False</span>,
+        <span class="string">'ocps'</span>: <span class="keyword">False</span>,
+        <span class="string">'consanguinity'</span>: <span class="keyword">False</span>
+    }
+    
+    <span class="comment"># Create calculator and classifier instances</span>
+    risk_calculator = StrokeRiskCalculator()
+    toast_classifier = TOASTClassifier()
+    
+    <span class="comment"># Calculate risk score</span>
+    risk_score = risk_calculator.calculate_risk_score(patient)
+    risk_level = risk_calculator.get_risk_level()
+    
+    <span class="comment"># Get TOAST classification</span>
+    toast_result = toast_classifier.classify(patient)
+    
+    <span class="comment"># Print results</span>
+    <span class="function">print</span>(<span class="string">f"Risk Score: {risk_score}"</span>)
+    <span class="function">print</span>(<span class="string">f"Risk Level: {risk_level['level']} ({risk_level['severity']})"</span>)
+    <span class="function">print</span>(<span class="string">f"TOAST Classification: {toast_result['type']}"</span>)
+    <span class="function">print</span>(<span class="string">f"Description: {toast_result['description']}"</span>)
+    <span class="function">print</span>(<span class="string">"Recommendations:"</span>)
+    <span class="keyword">for</span> rec <span class="keyword">in</span> toast_result[<span class="string">'recommendations'</span>]:
+        <span class="function">print</span>(<span class="string">f"- {rec}"</span>)
+
+<span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:
+    main()
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Particles Background
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof particlesJS !== 'undefined') {
+                particlesJS('particles-js', {
+                    particles: {
+                        number: { value: 80 },
+                        color: { value: '#ffffff' },
+                        shape: { type: 'circle' },
+                        opacity: { value: 0.5 },
+                        size: { value: 3 },
+                        move: { speed: 1 }
+                    },
+                    interactivity: {
+                        events: {
+                            onhover: { enable: true, mode: 'repulse' }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Global variables for thinking process
+        let thinkingInterval;
+        let isAnalyzing = false;
+        let currentInputField = null;
+        let currentInputValue = null;
+
+        // Loading messages
+        const loadingMessages = [
+            "Analyzing patient data...",
+            "Calculating risk factors...",
+            "Evaluating comorbidities...",
+            "Assessing stroke etiology...",
+            "Processing neurological parameters...",
+            "Consulting neural network...",
+            "Analyzing genetic predisposition...",
+            "Running TOAST classification algorithms...",
+            "Checking vascular integrity patterns...",
+            "Cross-referencing with medical database...",
+            "Calibrating risk assessment model...",
+            "Running differential diagnosis...",
+            "Evaluating treatment pathways...",
+            "Analyzing cerebrovascular metrics...",
+            "Calculating statistical probability...",
+            "Finalizing clinical assessment..."
+        ];
+
+        // Enhanced thinking phrases for all form fields
+        const thinkingPhrases = {
+            start: [
+                "Initializing neurological assessment...",
+                "Engaging cerebrovascular analysis model...",
+                "Preparing risk stratification algorithm...",
+                "Loading patient parameter matrix...",
+                "Establishing baseline clinical metrics..."
+            ],
+            processing: [
+                "Calculating risk coefficient based on input parameters...",
+                "Analyzing vascular integrity patterns...",
+                "Cross-referencing with clinical databases...",
+                "Running statistical probability models...",
+                "Evaluating comorbidity interactions...",
+                "Assessing neurological implications...",
+                "Quantifying stroke subtype indicators...",
+                "Measuring cerebrovascular reactivity patterns...",
+                "Computing risk-benefit analysis...",
+                "Evaluating genetic predisposition factors..."
+            ],
+            input: {
+                strokeType: {
+                    ischemic: [
+                        "Detected ischemic stroke pattern - caused by blood clot blocking cerebral vessels.",
+                        "Ischemic stroke identified - accounts for approximately 87% of all strokes.",
+                        "Analyzing thrombotic vs embolic probability in ischemic pattern...",
+                        "Ischemic stroke indicates potential clot formation or embolization - evaluating source."
+                    ],
+                    hemorrhagic: [
+                        "Detected hemorrhagic stroke pattern - caused by cerebral vessel rupture.",
+                        "Hemorrhagic stroke identified - accounts for approximately 13% of strokes but higher mortality.",
+                        "Hemorrhagic event detected - analyzing bleeding location and volume...",
+                        "Evaluating hemostatic parameters for hemorrhagic pattern - higher risk profile."
+                    ]
+                },
+                recurrent: {
+                    yes: [
+                        "Recurrent stroke detected - significantly elevated risk factor (3-point increase).",
+                        "Prior endothelial damage from previous stroke increases probability by 47%.",
+                        "Secondary prevention failure detected - recurrence increases mortality risk by 61%.",
+                        "Previous cerebrovascular event indicates compromised vascular integrity."
+                    ],
+                    no: [
+                        "First-time stroke event detected - relatively lower risk profile.",
+                        "No previous cerebrovascular events - establishing primary prevention parameters.",
+                        "Absence of stroke history is favorable prognostic indicator.",
+                        "First presentation of cerebrovascular pathology - baseline risk assessment applies."
+                    ]
+                },
+                gender: {
+                    male: [
+                        "Male gender detected - statistical correlation with higher stroke incidence.",
+                        "Male sex associated with 1.25x higher stroke risk than females before age 75.",
+                        "Testosterone hormonal profile may increase thrombotic tendency.",
+                        "Male patients show different anatomical distribution of cerebrovascular lesions."
+                    ],
+                    female: [
+                        "Female gender detected - hormonal profile may provide vascular protection pre-menopause.",
+                        "Estrogen has potential neuroprotective effects in acute ischemic events.",
+                        "Female stroke patients often present with more atypical symptoms.",
+                        "Female hormonal factors can be protective until menopause, then risk equalizes."
+                    ]
+                },
+                maleSmoker: {
+                    yes: [
+                        "Male smoker status detected - SIGNIFICANT RISK FACTOR (+2 points).",
+                        "Smoking causes endothelial dysfunction and accelerates atherosclerosis.",
+                        "Nicotine and carbon monoxide increase blood pressure and reduce oxygen delivery.",
+                        "Male smokers have 2-4× higher stroke risk compared to non-smokers."
+                    ],
+                    no: [
+                        "Non-smoking male detected - POSITIVE PROTECTIVE FACTOR.",
+                        "Absence of smoking toxins preserves endothelial function - favorable indicator.",
+                        "Non-smoking status reduces atherosclerotic progression rate by approximately 38%.",
+                        "Normal oxygen saturation levels maintained - reduced cerebral hypoxia risk."
+                    ]
+                },
+                femaleSmoker: {
+                    yes: [
+                        "Female smoker status detected - CRITICAL RISK FACTOR (+2 points).",
+                        "Smoking negates protective hormonal effects in females - especially concerning.",
+                        "Female smokers with additional risk factors (OCPs, migraines) have synergistic risk.",
+                        "Nicotine exposure creates prothrombotic state - particularly problematic in females."
+                    ],
+                    no: [
+                        "Non-smoking female detected - SIGNIFICANT PROTECTIVE FACTOR.",
+                        "Normal endothelial function preserved - allows hormonal protection to function.",
+                        "Absence of smoking toxins maintains cerebrovascular compliance.",
+                        "Non-smoking females maintain protective aspects of estrogen on vascular system."
+                    ]
+                },
+                htn: {
+                    yes: [
+                        "Hypertension detected - MAJOR RISK FACTOR (+2 points).",
+                        "Chronic hypertension causes arterial wall remodeling and reduced compliance.",
+                        "Elevated pressure increases risk of both ischemic and hemorrhagic events.",
+                        "Each 10mmHg increase in systolic BP increases stroke risk by approximately 30%."
+                    ],
+                    no: [
+                        "Normal blood pressure detected - IMPORTANT PROTECTIVE FACTOR.",
+                        "Absence of hypertensive stress on arterial walls preserves vessel integrity.",
+                        "Normal cerebrovascular autoregulation maintained with normotension.",
+                        "Normal pressure reduces risk of small vessel disease and microbleeds."
+                    ]
+                },
+                familyHistory: {
+                    yes: [
+                        "Family history of stroke detected - SIGNIFICANT RISK FACTOR (+2 points).",
+                        "Genetic predisposition suggests shared vascular vulnerabilities.",
+                        "Familial factors may influence coagulation cascade and inflammatory responses.",
+                        "First-degree relatives with stroke history increases risk by 2-3×."
+                    ],
+                    no: [
+                        "No family history of stroke - FAVORABLE GENETIC PROFILE.",
+                        "Absence of familial predisposition reduces inherited risk factors.",
+                        "No known genetic loading for cerebrovascular pathology.",
+                        "Reduces probability of inherited thrombophilias or vasculopathies."
+                    ]
+                },
+                ocps: {
+                    yes: [
+                        "Oral contraceptive use detected - SIGNIFICANT RISK FACTOR for females (+2 points).",
+                        "Exogenous estrogens increase thrombotic risk, especially with smoking.",
+                        "OCPs can increase risk of both venous and arterial thrombosis.",
+                        "Combination with smoking creates synergistic risk multiplication."
+                    ],
+                    no: [
+                        "No oral contraceptive use - REDUCED THROMBOTIC RISK for females.",
+                        "Absence of exogenous estrogens avoids additional prothrombotic stimulus.",
+                        "Natural hormonal profile maintains physiological coagulation balance.",
+                        "Eliminates synthetic hormone contribution to stroke risk."
+                    ]
+                },
+                consanguinity: {
+                    yes: [
+                        "Consanguinity detected - POTENTIAL RISK FACTOR (+1 point).",
+                        "Increased homozygosity for recessive stroke risk alleles.",
+                        "May amplify effect of hereditary thrombophilias or vasculopathies.",
+                        "Can concentrate genetic variants affecting lipid metabolism and coagulation."
+                    ],
+                    no: [
+                        "No consanguinity detected - NORMAL GENETIC DIVERSITY.",
+                        "Standard heterozygosity levels for stroke risk alleles.",
+                        "Reduced likelihood of homozygous recessive genetic disorders.",
+                        "Normal distribution of inherited thrombophilic or vasculopathic traits."
+                    ]
+                },
+                anticoagulants: {
+                    yes: [
+                        "Anticoagulant use detected - PROTECTIVE INTERVENTION (-1 point).",
+                        "Current anticoagulation provides thromboembolic protection in at-risk patients.",
+                        "Reduces risk of cardioembolic strokes by approximately 60-70%.",
+                        "NOTE: Increases hemorrhagic transformation risk if stroke occurs."
+                    ],
+                    no: [
+                        "No anticoagulant use detected - STANDARD THROMBOTIC RISK.",
+                        "Normal physiological coagulation cascade activity.",
+                        "If patient has AF or mechanical valve, absence represents missed prevention opportunity.",
+                        "Normal hemostatic balance maintained without pharmacological intervention."
+                    ]
+                },
+                valvular: {
+                    yes: [
+                        "Valvular heart disease detected - MAJOR RISK FACTOR (+3 points).",
+                        "Significant source of cardioembolic stroke, especially in mitral stenosis.",
+                        "Disrupted laminar flow creates conditions for thrombus formation.",
+                        "Particularly high risk with mechanical valves without adequate anticoagulation."
+                    ],
+                    no: [
+                        "No valvular heart disease - REDUCES CARDIOEMBOLIC RISK.",
+                        "Normal cardiac valve function without thromboembolic potential.",
+                        "Preserved laminar blood flow reducing thrombus formation risk.",
+                        "Eliminates major cardioembolic stroke mechanism."
+                    ]
+                },
+                nonValvular: {
+                    yes: [
+                        "Non-valvular cardiac disease detected - SIGNIFICANT RISK FACTOR (+2 points).",
+                        "Conditions like atrial fibrillation create risk of intracardiac thrombus.",
+                        "Chamber dilatation and wall motion abnormalities promote stasis and clotting.",
+                        "Cardiomyopathies associated with hypercoagulable state and embolic potential."
+                    ],
+                    no: [
+                        "No non-valvular cardiac disease - REDUCES CARDIOEMBOLIC RISK.",
+                        "Normal cardiac rhythm and contractility maintained.",
+                        "Absence of cardiac chamber enlargement reduces thrombus risk.",
+                        "Reduces risk of paradoxical embolism via septal defects."
+                    ]
+                },
+                mi: {
+                    yes: [
+                        "Myocardial infarction history detected - MAJOR RISK FACTOR (+3 points).",
+                        "MI (heart attack) represents established coronary atherosclerosis - implies systemic process.",
+                        "Post-MI ventricular dysfunction creates embolic potential from mural thrombi.",
+                        "Post-MI state associated with inflammatory and hypercoagulable conditions."
+                    ],
+                    no: [
+                        "No myocardial infarction history - REDUCES ATHEROSCLEROTIC BURDEN INDICATOR.",
+                        "Absence of confirmed coronary atherosclerosis suggests lower systemic burden.",
+                        "Normal ventricular function without mural thrombus potential.",
+                        "Eliminates specific post-MI hypercoagulability as contributing factor."
+                    ]
+                },
+                sle: {
+                    yes: [
+                        "Systemic Lupus Erythematosus (SLE) detected - SIGNIFICANT RISK FACTOR (+2 points).",
+                        "SLE creates inflammatory vasculopathy affecting cerebral vessels.",
+                        "Associated antiphospholipid antibodies increase thrombotic risk.",
+                        "SLE patients have 2-3x higher stroke risk independent of traditional factors." // using 'x' instead of '×'
+                    ],
+                    no: [
+                        "No SLE detected - NORMAL INFLAMMATORY PROFILE.",
+                        "Absence of autoimmune-mediated vascular inflammation.",
+                        "Normal endothelial function without lupus-mediated injury.",
+                        "Absence of lupus-associated hypercoagulable state."
+                    ]
+                },
+                antiphospholipid: {
+                    yes: [
+                        "Antiphospholipid syndrome detected - MAJOR RISK FACTOR (+3 points).",
+                        "Primary hypercoagulable state with very high stroke and recurrence risk.",
+                        "Pathogenic antibodies (anticardiolipin, lupus anticoagulant) promote thrombosis.",
+                        "May require more intensive anticoagulation for secondary prevention."
+                    ],
+                    no: [
+                        "No antiphospholipid syndrome - NORMAL IMMUNOLOGICAL COAGULATION PROFILE.",
+                        "Absence of pathogenic antibodies that promotethrombosis.",
+                        "Normal physiological balance between procoagulant and anticoagulant factors.",
+                        "Standard anticoagulation protocols applicable if needed."
+                    ]
+                }
+            }
+        };
+
+        // Function to type out text character by character
+        function typeText(element, text, callback, speed = 30) {
+            let i = 0;
+            element.textContent = '';
+            
+            function typeChar() {
+                if (i < text.length) {
+                    element.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(typeChar, speed);
+                } else if (callback) {
+                    callback();
+                }
+            }
+            
+            typeChar();
+        }
+
+        // Update thinking process display with typing animation
+        function updateThinkingProcess(text, isSpecial = false) {
+            const thinkingProcess = document.getElementById('thinkingProcess');
+            const newThinking = document.createElement('div');
+            newThinking.className = 'thinking-line';
+            
+            if (isSpecial) {
+                // Create container for the animated text
+                const spanElement = document.createElement('span');
+                spanElement.className = 'calculation-result';
+                newThinking.appendChild(spanElement);
+                
+                thinkingProcess.appendChild(newThinking);
+                typeText(spanElement, text, null, Math.floor(Math.random() * 20) + 20); // Random typing speed
+            } else {
+                thinkingProcess.appendChild(newThinking);
+                typeText(newThinking, text, null, Math.floor(Math.random() * 20) + 20); // Random typing speed
+            }
+            
+            thinkingProcess.scrollTop = thinkingProcess.scrollHeight;
+            
+            // Keep only the last 15 lines to prevent too much content
+            while (thinkingProcess.children.length > 15) {
+                thinkingProcess.removeChild(thinkingProcess.children[0]);
+            }
+        }
+
+        // Get analysis for numerical lab values
+        function getLabValueAnalysis(fieldId, value) {
+                       const range = labRanges[fieldId];
+            if (!range) return null;
+            
+            let category;
+            if (fieldId === 'hba1c') {
+                if (value < range.min) category = 'low';
+                else if (value <= range.max) category = 'normal';
+                else if (value <= 6.5) category = 'borderline';
+                else if (value <= 8.0) category = 'high';
+                else category = 'veryHigh';
+            } else if (fieldId === 'hdl') {
+                if (value < range.min) category = 'low';
+                else if (value <= range.max) category = 'normal';
+                else category = 'high';
+            } else { // tg, ldl
+                if (value < range.min) category = 'low';
+                else if (value <= range.max) category = 'normal';
+                else if (value <= range.max * 1.5) category = 'high';
+                else category = 'veryHigh';
+            }
+            
+            const analyses = labValueAnalysis[fieldId][category];
+            if (!analyses || analyses.length === 0) return null;
+            
+            return {
+                text: analyses[Math.floor(Math.random() * analyses.length)],
+                category: category,
+                isAbnormal: category !== 'normal'
+            };
+        }
+
+        // Setup all form field listeners with enhanced analysis for numerical values
+        function setupFormListeners() {
+            const formElements = document.getElementById('strokeForm').elements;
+            for (let i = 0; i < formElements.length; i++) {
+                const element = formElements[i];
+                if (element.tagName !== 'BUTTON') {
+                    element.addEventListener('change', function() {
+                        currentInputField = this.id;
+                        currentInputValue = this.value;
+                        
+                        // For numerical lab values, provide detailed analysis
+                        if (['hba1c', 'tg', 'ldl', 'hdl'].includes(this.id) && this.value) {
+                            const numValue = parseFloat(this.value);
+                            const range = labRanges[this.id];
+                            
+                            // First show what was input
+                            updateThinkingProcess(`Analyzing ${range.name} input: ${numValue} ${range.unit}`, true);
+                            
+
+                            // Then show the analysis
+                            const analysis = getLabValueAnalysis(this.id, numValue);
+                            if (analysis) {
+                                setTimeout(() => {
+                                    const className = analysis.isAbnormal ? 'calculation-warning' : 'calculation-node';
+                                    const element = document.createElement('div');
+                                    element.className = 'thinking-line';
+                                    const spanElement = document.createElement('span');
+                                    spanElement.className = className;
+                                    element.appendChild(spanElement);
+                                    
+                                    document.getElementById('thinkingProcess').appendChild(element);
+                                    typeText(spanElement, analysis.text, null, Math.floor(Math.random() * 15) + 15);
+                                    
+                                    // Show normal range info
+                                    setTimeout(() => {
+                                        updateThinkingProcess(`Reference range for ${range.name}: ${range.min}-${range.max} ${range.unit}`, false);
+                                    }, 700);
+                                    
+                                    document.getElementById('thinkingProcess').scrollTop = 
+                                        document.getElementById('thinkingProcess').scrollHeight;
+                                }, 900);
+                            }
+                        }
+                        // For predefined field-specific messages
+                        else if (thinkingPhrases.input[currentInputField] && 
+                            thinkingPhrases.input[currentInputField][currentInputValue]) {
+                            const fieldThoughts = thinkingPhrases.input[currentInputField][currentInputValue];
+                            const randomThought = fieldThoughts[Math.floor(Math.random() * fieldThoughts.length)];
+                            updateThinkingProcess(randomThought, true);
+                            
+
+                            // For specific fields, add additional medical context
+                            setTimeout(() => {
+                                if (currentInputField === 'mi' && currentInputValue === 'yes') {
+                                    updateThinkingProcess("Myocardial Infarction (MI) is a heart attack - indicates presence of coronary atherosclerosis", false);
+                                } else if (currentInputField === 'valvular' && currentInputValue === 'yes') {
+                                    updateThinkingProcess("Valvular heart disease affects cardiac valves - major source of blood clots that can travel to brain", false);
+                                } else if (currentInputField === 'antiphospholipid' && currentInputValue === 'yes') {
+                                    updateThinkingProcess("Antiphospholipid syndrome is an autoimmune disorder that causes abnormal blood clotting", false);
+                                } else if (currentInputField === 'sle' && currentInputValue === 'yes') {
+                                    updateThinkingProcess("Systemic Lupus Erythematosus (SLE) is a chronic autoimmune disease that can affect all body systems", false);
+                                }
+                            }, 500);
+                        }
+                        // For non-handled inputs, show generic message
+                        else {
+                            updateThinkingProcess(`Processing input: ${currentInputField} = ${currentInputValue}`, true);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Generate thinking process text
+        // Generate thinking process text
+        function generateThinkingText() {
+            if (!isAnalyzing) {
+                // Random processing thought during normal operation
+                const randomIndex = Math.floor(Math.random() * thinkingPhrases.processing.length);
+                return thinkingPhrases.processing[randomIndex];
+            } else {
+                // During analysis, return one of the loading messages
+                const randomIndex = Math.floor(Math.random() * loadingMessages.length);
+                return loadingMessages[randomIndex];
+            }
+        }
+
+        // Start thinking process
+        function startThinkingProcess() {
+            // Initial thinking lines
+            for (let i = 0; i < 3; i++) {
+                const startPhrase = thinkingPhrases.start[Math.floor(Math.random() * thinkingPhrases.start.length)];
+                updateThinkingProcess(startPhrase);
+            }
+            
+            // Setup interval for continuous thinking
+            thinkingInterval = setInterval(() => {
+                if (currentInputField && currentInputValue) {
+                    // If we have input field information, show thoughts about it
+                    const fieldCategory = thinkingPhrases.input[currentInputField];
+                    if (fieldCategory && fieldCategory[currentInputValue]) {
+                        const fieldThoughts = fieldCategory[currentInputValue];
+                        const randomThought = fieldThoughts[Math.floor(Math.random() * fieldThoughts.length)];
+                        updateThinkingProcess(randomThought, true);
+                        
+                        // Reset current input after showing thoughts about it
+                        currentInputField = null;
+                        currentInputValue = null;
+                    } else {
+                        updateThinkingProcess(generateThinkingText());
+                    }
+                } else {
+                    updateThinkingProcess(generateThinkingText());
+                }
+            }, 2500); // New thought every 2.5 seconds
+        }
+
+        // Stop thinking process
+        function stopThinkingProcess() {
+            clearInterval(thinkingInterval);
+        }
+
+        // Toggle side menu
+        function toggleSideMenu() {
+            const sideMenu = document.getElementById('sideMenu');
+            const hamburgerIcon = document.getElementById('hamburgerIcon');
+            
+            sideMenu.classList.toggle('open');
+            hamburgerIcon.classList.toggle('open');
+            
+            // Start or stop thinking process based on menu state
+            if (sideMenu.classList.contains('open') && !thinkingInterval) {
+                startThinkingProcess();
+            } else if (!sideMenu.classList.contains('open') && thinkingInterval) {
+                stopThinkingProcess();
+            }
+        }
+
+        function toggleGenderFields() {
+            const gender = document.getElementById('gender').value;
+            document.getElementById('maleSmokerField').style.display = gender === 'male' ? 'block' : 'none';
+            document.getElementById('femaleSmokerField').style.display = gender === 'female' ? 'block' : 'none';
+            document.getElementById('ocpsField').style.display = gender === 'female' ? 'block' : 'none';
+        }
+
+        function assessRisk() {
+            // Show loading spinner with rotating messages
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            const loadingMessage = document.getElementById('loadingMessage');
+            loadingOverlay.style.display = 'flex';
+            
+            // Set the flag to indicate we're in analysis mode
+            isAnalyzing = true;
+            
+            // Rotate through loading messages
+            let messageIndex = 0;
+            const messageRotation = setInterval(() => {
+                loadingMessage.textContent = loadingMessages[messageIndex];
+                messageIndex = (messageIndex + 1) % loadingMessages.length;
+            }, 700); // Change message every 0.7 seconds
+            
+            // Add loading message to thinking process if visible
+            if (document.getElementById('sideMenu').classList.contains('open')) {
+                updateThinkingProcess("Beginning comprehensive analysis...", true);
+            }
+            
+            // Random delay between 2 and 5 seconds to simulate processing
+            const analysisTime = Math.floor(Math.random() * 3000) + 2000; // 2-5 seconds
+            
+            setTimeout(() => {
+                // Get form values
+                const formValues = {
+                    strokeType: document.getElementById('strokeType').value,
+                    recurrent: document.getElementById('recurrent').value,
+                    gender: document.getElementById('gender').value,
+                    maleSmoker: document.getElementById('maleSmoker').value,
+                    femaleSmoker: document.getElementById('femaleSmoker').value,
+                    htn: document.getElementById('htn').value,
+                    hba1c: parseFloat(document.getElementById('hba1c').value),
+                    tg: parseInt(document.getElementById('tg').value),
+                    ldl: parseInt(document.getElementById('ldl').value),
+                    hdl: parseInt(document.getElementById('hdl').value),
+                    anticoagulants: document.getElementById('anticoagulants').value,
+                    familyHistory: document.getElementById('familyHistory').value,
+                    valvular: document.getElementById('valvular').value,
+                    nonValvular: document.getElementById('nonValvular').value,
+                    mi: document.getElementById('mi').value,
+                    sle: document.getElementById('sle').value,
+                    antiphospholipid: document.getElementById('antiphospholipid').value,
+                    sjogren: document.getElementById('sjogren').value,
+                    behcet: document.getElementById('behcet').value,
+                    rheumatoid: document.getElementById('rheumatoid').value,
+                    ocps: document.getElementById('ocps').value,
+                    consanguinity: document.getElementById('consanguinity').value
+                };
+
+                // Validate form
+                const formElements = document.getElementById('strokeForm').elements;
+                for (let i = 0; i < formElements.length; i++) {
+                    if (formElements[i].tagName !== 'BUTTON' && formElements[i].required && !formElements[i].value) {
+                        alert('Please fill out all required fields.');
+                        clearInterval(messageRotation);
+                        loadingOverlay.style.display = 'none';
+                        isAnalyzing = false;
+                        return;
+                    }
+                }
+
+                // Calculate risk score
+                let riskScore = 0;
+
+                // Stroke type
+                if (formValues.strokeType === 'hemorrhagic') riskScore += 4;
+                
+                // Recurrent stroke
+                if (formValues.recurrent === 'yes') riskScore += 3;
+                
+                // Smoking
+                if ((formValues.gender === 'male' && formValues.maleSmoker === 'yes') ||
+                    (formValues.gender === 'female' && formValues.femaleSmoker === 'yes')) {
+                    riskScore += 2;
+                }
+                
+                // HTN
+                if (formValues.htn === 'yes') riskScore += 2;
+                
+                // HbA1c
+                if (formValues.hba1c >= 6.5) riskScore += Math.min(3, Math.floor((formValues.hba1c - 6.5) / 0.5));
+                
+                // Lipids
+                if (formValues.ldl >= 160) riskScore += 2;
+                if (formValues.hdl < 40) riskScore += 1;
+                if (formValues.tg >= 150) riskScore += 1;
+                
+                // Medical history
+                if (formValues.anticoagulants === 'yes') riskScore -= 1;
+                if (formValues.familyHistory === 'yes') riskScore += 2;
+                if (formValues.valvular === 'yes') riskScore += 3;
+                if (formValues.nonValvular === 'yes') riskScore += 2;
+                if (formValues.mi === 'yes') riskScore += 3;
+                if (formValues.sle === 'yes') riskScore += 2;
+                
+                // Autoimmune diseases
+                if (formValues.antiphospholipid === 'yes') riskScore += 3;
+                if (formValues.sjogren === 'yes') riskScore += 2;
+                if (formValues.behcet === 'yes') riskScore += 2;
+                if (formValues.rheumatoid === 'yes') riskScore += 2;
+                
+                // Other factors
+                if (formValues.ocps === 'yes') riskScore += 2;
+                if (formValues.consanguinity === 'yes') riskScore += 1;
+
+                // Determine risk level
+                let riskLevel, riskClass, severity, riskPercentage, riskMeterClass;
+                if (riskScore >= 15) {
+                    riskLevel = "Very High Risk";
+                    riskClass = "high-risk";
+                    severity = "Severe";
+                    riskPercentage = 95;
+                    riskMeterClass = "risk-high";
+                } else if (riskScore >= 10) {
+                    riskLevel = "High Risk";
+                    riskClass = "high-risk";
+                    severity = "High";
+                    riskPercentage = 70;
+                    riskMeterClass = "risk-high";
+                } else if (riskScore >= 5) {
+                    riskLevel = "Moderate Risk";
+                    riskClass = "moderate-risk";
+                    severity = "Moderate";
+                    riskPercentage = 40;
+                    riskMeterClass = "risk-moderate";
+                } else {
+                    riskLevel = "Low Risk";
+                    riskClass = "low-risk";
+                    severity = "Mild";
+                    riskPercentage = 15;
+                    riskMeterClass = "risk-low";
+                }
+
+                // Determine TOAST classification (for ischemic strokes)
+                let toastType = "";
+                let toastDescription = "";
+                if (formValues.strokeType === 'ischemic') {
+                    if (formValues.valvular === 'yes' || formValues.mi === 'yes') {
+                        toastType = "Cardioembolic (CE)";
+                        toastDescription = "Likely caused by cardiac embolism from valvular heart disease or myocardial infarction.";
+                    } else if (formValues.ldl >= 160 || formValues.htn === 'yes') {
+                        toastType = "Large-Artery Atherosclerosis (LAA)";
+                        toastDescription = "Associated with atherosclerosis risk factors like high LDL and hypertension.";
+                    } else if (formValues.antiphospholipid === 'yes' || formValues.sle === 'yes') {
+                        toastType = "Stroke of Other Determined Etiology";
+                        toastDescription = "Associated with autoimmune or hematologic disorders.";
+                    } else {
+                        toastType = "Undetermined Etiology";
+                        toastDescription = "Insufficient information for specific classification.";
+                    }
+                }
+
+                // Add final analysis messages to thinking process if visible
+                if (document.getElementById('sideMenu').classList.contains('open')) {
+                    updateThinkingProcess(`Final risk score calculated: ${riskScore}`, true);
+                    updateThinkingProcess(`Assessment level: ${riskLevel} (${severity})`, true);
+                    if (formValues.strokeType === 'ischemic') {
+                        updateThinkingProcess(`TOAST Classification: ${toastType}`, true);
+                    }
+                    updateThinkingProcess("Your results are ready.", true);
+                }
+
+                // Display results
+                const resultDiv = document.getElementById('riskResult');
+                resultDiv.innerHTML = `
+                    <div class="results-header">
+                        <div class="results-icon"><i class="fas fa-exclamation"></i></div>
+                        <h3>Risk Assessment</h3>
+                    </div>
+                    <p><strong>${riskLevel}</strong> of stroke. Severity: <strong>${severity}</strong></p>
+                    <div class="risk-meter">
+                        <div class="risk-meter-fill ${riskMeterClass}" style="width: ${riskPercentage}%"></div>
+                    </div>
+                    <p>Clinical risk score: <strong>${riskScore}</strong></p>
+                    <p>Primary risk factors: 
+                        ${formValues.htn === 'yes' ? '<strong>Hypertension</strong>, ' : ''} 
+                        ${formValues.ldl >= 160 ? '<strong>Elevated LDL</strong>, ' : ''} 
+                        ${formValues.hba1c >= 6.5 ? '<strong>Elevated HbA1c</strong>, ' : ''} 
+                        ${formValues.mi === 'yes' ? '<strong>History of MI</strong>, ' : ''} 
+                        ${formValues.valvular === 'yes' ? '<strong>Valvular Heart Disease</strong>' : ''}
+                    </p>
+                `;
+                resultDiv.className = `result ${riskClass}`;
+                
+                const toastDiv = document.getElementById('toastClassification');
+                if (formValues.strokeType === 'ischemic') {
+                    toastDiv.innerHTML = `
+                        <div class="results-header">
+                            <div class="results-icon"><i class="fas fa-clipboard-list"></i></div>
+                            <h3>TOAST Classification</h3>
+                        </div>
+                        <div class="toast-label">${toastType}</div>
+                        <p>${toastDescription}</p>
+                        <p>Recommended further investigations based on this classification:</p>
+                        <ul>
+                            ${toastType === "Cardioembolic (CE)" ? 
+                                '<li>Echocardiography</li><li>Extended cardiac monitoring</li><li>Evaluation for anticoagulation therapy</li>' : ''}
+                            ${toastType === "Large-Artery Atherosclerosis (LAA)" ? 
+                                '<li>Carotid duplex ultrasound</li><li>CT angiography</li><li>Lipid management</li>' : ''}
+                            ${toastType === "Stroke of Other Determined Etiology" ? 
+                                '<li>Autoimmune panel</li><li>Hypercoagulability testing</li><li>Specialized consultation</li>' : ''}
+                            ${toastType === "Undetermined Etiology" ? 
+                                '<li>Extended vascular imaging</li><li>Cardiac monitoring</li><li>Consider additional tests based on clinical suspicion</li>' : ''}
+                        </ul>
+                    `;
+                } else {
+                    toastDiv.innerHTML = `
+                        <div class="results-header">
+                            <div class="results-icon"><i class="fas fa-clipboard-list"></i></div>
+                            <h3>TOAST Classification</h3>
+                        </div>
+                        <p>TOAST classification is primarily for ischemic strokes.</p>
+                        <p>For hemorrhagic stroke, consider further evaluation for:</p>
+                        <ul>
+                            <li>Intracranial aneurysms</li>
+                            <li>Arteriovenous malformations</li>
+                            <li>Cerebral amyloid angiopathy</li>
+                            <li>Coagulopathy assessment</li>
+                        </ul>
+                    `;
+                }
+
+                // Animate results appearing and show export button
+                setTimeout(() => {
+                    // Clear the message rotation
+                    clearInterval(messageRotation);
+                    
+                    // Hide loading overlay
+                    loadingOverlay.style.display = 'none';
+                    isAnalyzing = false;
+                    
+                    // Show results with animation
+                    resultDiv.style.display = 'block';
+                    toastDiv.style.display = 'block';
+                    
+                    // Show export report button
+                    document.getElementById('exportPdfBtn').style.display = 'inline-flex';
+                }, 500);
+            }, analysisTime);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFormListeners();
+            
+            // Open all form sections by default
+            document.querySelectorAll('.section-header').forEach(header => {
+                if (!header.classList.contains('active')) {
+                    header.classList.add('active');
+                    header.querySelector('i:last-child').className = 'fas fa-chevron-up';
+                    header.nextElementSibling.classList.add('active');
+                }
+            });
+            
+            // Auto-open side menu on first load to show users it exists
+            setTimeout(() => {
+                if (!document.getElementById('sideMenu').classList.contains('open')) {
+                    toggleSideMenu();
+                }
+                
+                // Auto-close after 5 seconds if user hasn't interacted
+                setTimeout(() => {
+                    if (document.getElementById('sideMenu').classList.contains('open')) {
+                        toggleSideMenu();
+                    }
+                }, 5000);
+            }, 1500);
+            
+            // Update progress bar initially
+            updateProgressBar();
+            
+            // Show export report button when results are displayed
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        if (document.getElementById('riskResult').style.display === 'block') {
+                            document.getElementById('exportPdfBtn').style.display = 'inline-flex';
+                        }
+                    }
+                });
+            });
+            
+            observer.observe(document.getElementById('riskResult'), { attributes: true });
+        });
+
+        // Source Code Modal Functions
+        function openSourceCodeModal() {
+            document.getElementById('sourceCodeModal').style.display = 'block';
+        }
+        
+        function closeSourceCodeModal() {
+            document.getElementById('sourceCodeModal').style.display = 'none';
+        }
+        
+        function copySourceCode() {
+            const pythonCode = document.getElementById('pythonCode').innerText;
+            navigator.clipboard.writeText(pythonCode)
+                .then(() => {
+                    const copyBtn = document.querySelector('.copy-btn');
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy Code';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                });
+        }
+        
+        // Close the modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('sourceCodeModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Add progress tracking functionality
+        function updateProgressBar() {
+            const form = document.getElementById('strokeForm');
+            const requiredFields = form.querySelectorAll('[required]');
+            let filledCount = 0;
+            
+            requiredFields.forEach(field => {
+                if (field.value !== "") {
+                    filledCount++;
+                }
+            });
+            
+            const progressPercentage = Math.floor((filledCount / requiredFields.length) * 100);
+            document.getElementById('progressBar').style.width = progressPercentage + '%';
+            document.getElementById('progressText').textContent = `${progressPercentage}% Complete (${filledCount}/${requiredFields.length} fields)`;
+            
+            // Update submit button state
+            if (progressPercentage === 100) {
+                document.getElementById('analyzeBtn').classList.add('complete');
+            } else {
+                document.getElementById('analyzeBtn').classList.remove('complete');
+            }
+        }
+        
+        // Function to toggle section visibility
+        function toggleSection(header) {
+            header.classList.toggle('active');
+            const content = header.nextElementSibling;
+            content.classList.toggle('active');
+            
+            // Update section icon
+            const icon = header.querySelector('i:last-child');
+            if (content.classList.contains('active')) {
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                icon.className = 'fas fa-chevron-down';
+            }
+            
+            // Scroll into view if opening
+            if (content.classList.contains('active')) {
+                setTimeout(() => {
+                    content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+        
+        // Toggle dark mode
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            
+            // Save preference to localStorage
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            // Update icon
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            darkModeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        
+        // Export results as PDF
+        function exportToPDF() {
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            loadingOverlay.style.display = 'flex';
+            loadingMessage.textContent = "Generating PDF report...";
+            
+            // Create a temporary element for the PDF content with better formatting
+            const reportElement = document.createElement('div');
+            reportElement.style.padding = '20px';
+            reportElement.style.fontSize = '12pt';
+            reportElement.style.fontFamily = 'Arial, sans-serif';
+            reportElement.style.color = '#333';
+            
+            // Get form values for patient data section
+            const formValues = {
+                strokeType: document.getElementById('strokeType').value,
+                recurrent: document.getElementById('recurrent').value,
+                gender: document.getElementById('gender').value,
+                smoker: (document.getElementById('gender').value === 'male' ? 
+                        document.getElementById('maleSmoker').value : 
+                        document.getElementById('femaleSmoker').value),
+                htn: document.getElementById('htn').value,
+                familyHistory: document.getElementById('familyHistory').value,
+                hba1c: document.getElementById('hba1c').value,
+                tg: document.getElementById('tg').value,
+                ldl: document.getElementById('ldl').value,
+                hdl: document.getElementById('hdl').value,
+                // Get other values as needed
+            };
+            
+            // Get risk assessment data
+            const riskElement = document.getElementById('riskResult');
+            const riskLevel = riskElement.querySelector('p strong').textContent;
+            const severity = riskElement.querySelectorAll('p strong')[1].textContent;
+            const riskScore = riskElement.querySelectorAll('p strong')[2].textContent;
+            
+            // Get TOAST data
+            const toastElement = document.getElementById('toastClassification');
+            let toastType = '';
+            let toastDescription = '';
+            const toastLabel = toastElement.querySelector('.toast-label');
+            if (toastLabel) {
+                toastType = toastLabel.textContent;
+                toastDescription = toastElement.querySelector('p').textContent;
+            } else {
+                toastType = 'Not Applicable';
+                toastDescription = 'TOAST classification is primarily for ischemic strokes.';
+            }
+            
+            // Get current date for the report
+            const currentDate = new Date();
+            const dateString = currentDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            const timeString = currentDate.toLocaleTimeString('en-US');
+            
+            // Build the report HTML with proper sections
+            reportElement.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #005EB8; margin-bottom: 5px;">Stroke Risk Assessment Report</h1>
+                    <p style="margin-top: 0;">Generated on ${dateString} at ${timeString}</p>
+                    <hr style="border-top: 2px solid #005EB8; margin: 20px 0;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h2 style="color: #005EB8; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Patient Information</h2>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 5px; width: 50%;"><strong>Stroke Type:</strong> ${formValues.strokeType}</td>
+                            <td style="padding: 5px;"><strong>Gender:</strong> ${formValues.gender}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;"><strong>Recurrent Stroke:</strong> ${formValues.recurrent}</td>
+                            <td style="padding: 5px;"><strong>Smoker:</strong> ${formValues.smoker}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;"><strong>Hypertension:</strong> ${formValues.htn}</td>
+                            <td style="padding: 5px;"><strong>Family History:</strong> ${formValues.familyHistory}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h2 style="color: #005EB8; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Laboratory Values</h2>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 5px; width: 50%;"><strong>HbA1c:</strong> ${formValues.hba1c}%</td>
+                            <td style="padding: 5px;"><strong>LDL:</strong> ${formValues.ldl} mg/dL</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;"><strong>Triglycerides:</strong> ${formValues.tg} mg/dL</td>
+                            <td style="padding: 5px;"><strong>HDL:</strong> ${formValues.hdl} mg/dL</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h2 style="color: #005EB8; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Risk Assessment</h2>
+                    <p><strong>Risk Level:</strong> ${riskLevel}</p>
+                    <p><strong>Severity:</strong> ${severity}</p>
+                    <p><strong>Clinical Risk Score:</strong> ${riskScore}</p>
+                    
+                    <div style="width: 100%; background-color: #f0f0f0; height: 20px; border-radius: 10px; margin: 15px 0; overflow: hidden;">
+                        <div style="height: 100%; background-color: ${
+                            riskLevel.includes('High') ? '#ED2E38' : 
+                            riskLevel.includes('Moderate') ? '#FDA50F' : '#00AC41'
+                        }; width: ${
+                            riskLevel.includes('Very High') ? '95%' : 
+                            riskLevel.includes('High') ? '70%' : 
+                            riskLevel.includes('Moderate') ? '40%' : '15%'
+                        };"></div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h2 style="color: #005EB8; border-bottom: 1px solid #ddd; padding-bottom: 5px;">TOAST Classification</h2>
+                    <p><strong>Classification:</strong> ${toastType}</p>
+                    <p><strong>Description:</strong> ${toastDescription}</p>
+                    ${
+                        formValues.strokeType === 'ischemic' ? 
+                        `<p><strong>Recommended Investigations:</strong></p>
+                        <ul>
+                            ${toastType.includes('Cardioembolic') ? 
+                            '<li>Echocardiography</li><li>Extended cardiac monitoring</li><li>Evaluation for anticoagulation therapy</li>' : ''}
+                            ${toastType.includes('Large-Artery') ? 
+                            '<li>Carotid duplex ultrasound</li><li>CT angiography</li><li>Lipid management</li>' : ''}
+                            ${toastType.includes('Other Determined') ? 
+                            '<li>Autoimmune panel</li><li>Hypercoagulability testing</li><li>Specialized consultation</li>' : ''}
+                            ${toastType.includes('Undetermined') ? 
+                            '<li>Extended vascular imaging</li><li>Cardiac monitoring</li><li>Consider additional tests based on clinical suspicion</li>' : ''}
+                        </ul>` : 
+                        `<p><strong>Recommended Investigations for Hemorrhagic Stroke:</strong></p>
+                        <ul>
+                            <li>Intracranial aneurysms evaluation</li>
+                            <li>Arteriovenous malformations assessment</li>
+                            <li>Cerebral amyloid angiopathy testing</li>
+                            <li>Coagulopathy assessment</li>
+                        </ul>`
+                    }
+                </div>
+                
+                <div style="margin-top: 30px; text-align: center; font-size: 10pt; color: #777;">
+                    <p>This report was generated using the NeuroCare Stroke Classification System.</p>
+                    <p>The information provided is based on current clinical assessment tools and should be interpreted by a qualified healthcare professional.</p>
+                </div>
+            `;
+            
+            // Generate the PDF from our properly formatted element
+            setTimeout(() => {
+                const opt = {
+                    margin: 1,
+                    filename: 'Stroke_Risk_Assessment_Report.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                };
+                
+                html2pdf().from(reportElement).set(opt).save()
+                    .then(() => {
+                        loadingOverlay.style.display = 'none';
+                        alert('Clinical report downloaded successfully!');
+                    })
+                    .catch(error => {
+                        console.error('PDF generation error:', error);
+                        loadingOverlay.style.display = 'none';
+                        alert('There was an error generating the PDF report. Please try again.');
+                    });
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
